@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ subject }}</title>
+    <style>
+        /* Basic CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        .header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .footer {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center; 
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"> 
+
+            <h1>{{ subject }}</h1>
+        </div>
+        <div class="content">
+            {{ message }}
+        </div>
+        <div class="footer">
+            <p>Best regards,</p>
+            <p>{{ sender_name }}</p>
+            <p>{{ sender_email }}</p>
+        </div>
+    </div>
+</body>
+</html>
