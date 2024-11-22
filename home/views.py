@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 def index(request):
     user = request.user
@@ -417,7 +418,7 @@ def metricManager(request):
             'success': 'Metric deleted successfully'
         })
 
-
+@csrf_exempt
 def sendEmail(request):
     # if not request.user.is_authenticated:
     #     return redirect('signin')
@@ -425,32 +426,64 @@ def sendEmail(request):
     # userProfile = UserProfile.objects.get(user=user)
     # if userProfile.role != 'admin':
     #     return redirect('index')
-    if request.method == 'POST':
-        subject = 'NAD Data Entry Reminder'
-        message = 'This is Test Mail for Testing SMTP Service'
-        sender_name = 'Jaivin Barot'
-        sender_email = 'jaivin_barot@daiict.ac.in'
-        recipient_email = 'jaivin_barot@daiict.ac.in',
+    
+    subject = 'Testing Mail fot NAD Data Entry Reminder'
+    message = 'This is Test Mail for Testing SMTP Service'
+    sender_email = 'jaivin_barot@daiict.ac.in'
+    recipient_email = 'jaivin_barot@daiict.ac.in'
+    html_message = render_to_string('email_template.html', {
+        'subject': subject,
+        'message': message,
 
-        html_message = render_to_string('templates/email_template.html', {
-            'subject': subject,
-            'message': message,
-            'sender_name': sender_name,
-            'sender_email': sender_email,
-        })
+        'sender_name': 'Jaivin Barot',
+        'sender_email': sender_email,
+    })
 
-        send_mail(
-            subject,
-            message,
-            sender_email,
-            [recipient_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-
-
-        return HttpResponse("Email sent successfully!")
+    send_mail(subject, message, sender_email, [recipient_email], html_message=html_message,fail_silently=True)
+    # send_mail(subject,message,sender_email,[recipient_email],fail_silently=False)
+        # html_message=html_message,,
+    
+    return HttpResponse("Email sent successfully!")
         # email = request.POST.get('email')
         # subject = request.POST.get('subject')
         # message = request.POST.get('message')
         # send_mail(subject, message, 'zL6Dw@example.com', [email])
+
+def Dashboard(request):
+
+
+    # #get all users whoes role is viewer
+    users = UserProfile.objects.filter(role='editor')
+    # # get all metrics whoes answer is not null
+    # metrics_not_null = Metrics.objects.filter(answer__isnull=False)
+    # metrics = Metrics.objects.filter(answer__isnull=True)
+    #get count of answered and not answered metrics for each user
+    users_answered_not_answered = []
+    for user in users:
+        assigned_metrics = UserProfile.objects.filter(user=user.user).first().metrics.all()
+        not_answered = []
+        answerd = []
+        for metric in assigned_metrics:
+            if metric.answer == '':
+                not_answered.append(metric)
+            else:
+                answerd.append(metric)
+
+            
+        answered_metrics = Metrics.objects.filter(answered_by=user.user, answer__isnull=False)
+        not_answered_metrics = Metrics.objects.filter(answered_by=user.user, answer__isnull=True)
+        users_answered_not_answered.append({
+            'user': user.user.username,
+            'assigned':assigned_metrics.__len__(),
+            'answered': answered_metrics.__len__(),
+            'not_answered': len(not_answered),
+        })
+    # metrics  = Metrics.objects.all()
+    # context = {
+    #     'users':users,
+    #     'metrics_not_completed':metrics_not_null.__len__(),
+    #     'metrics_completed':metrics.__len__(),
+    # }
+    print(users_answered_not_answered)
+    return HttpResponse("Data")
+    # return render(request,'dashboard.html',context)

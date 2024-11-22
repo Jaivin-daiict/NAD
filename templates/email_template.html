@@ -1,58 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ subject }}</title>
+    <title>Friendly Reminder: Pending Tasks</title>
     <style>
-        /* Basic CSS styles */
         body {
             font-family: Arial, sans-serif;
             font-size: 16px;
             line-height: 1.5;
             margin: 0;
-            padding: 0;
+            padding: 20px;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f2f2f2;
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
         }
 
-        .header {
-            background-color: #333;
-            color: #fff;
-            padding: 20px;
+        p {
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 10px 20px;
             text-align: center;
-        }
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px; 
 
-        .content {
-            padding: 20px;
-        }
-
-        .footer {
-            background-color: #333;
-            color: #fff;
-            padding: 20px;
-            text-align: center; 
-
+            margin: 4px 2px;
+            cursor: pointer;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header"> 
+<body>   
 
-            <h1>{{ subject }}</h1>
-        </div>
-        <div class="content">
-            {{ message }}
-        </div>
-        <div class="footer">
-            <p>Best regards,</p>
-            <p>{{ sender_name }}</p>
-            <p>{{ sender_email }}</p>
-        </div>
-    </div>
+    <h1>Friendly Reminder: You've Got Pending Tasks!</h1>
+
+    <p>Hi [User's Name],</p>
+
+    <p>We wanted to gently remind you about the following tasks that are currently pending:</p>
+
+    <ul>
+        {% for task in tasks %}
+        <li>{{ task.title }}</li>
+        {% endfor %}
+    </ul>
+
+    <p>Please take a moment to review and prioritize these tasks. If you need any assistance or have any questions, don't hesitate to reach out to us.</p>
+
+    <a href="[Link to Task Management System]" class="button">View Your Tasks</a>
+
+    <p>Thanks,</p>
+    <p>[Your Name]</p>
+    <p>[Your Organization]</p>
 </body>
 </html>

@@ -13,4 +13,5 @@ urlpatterns = [
     path("manage-sub-criterion/", views.subCriterionManager, name="subCriterionManager"),
     path("manage-metrics/", views.metricManager, name="metricManager"),
     path('send-email/', views.sendEmail, name='sendEmail'),
+    path('dashboard/', views.Dashboard, name='Dashboard'),
 ]
