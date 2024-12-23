@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>NAD - Home Page</title>
+        <title>NACC - Home Page</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             html {
@@ -33,6 +33,12 @@
     <body class="bg-gray-100 overflow-y-scroll">
         <div class="flex h-screen">
             <!-- Sidebar -->
+
+            <div id="remainingTime" class="absolute top-4 right-4 p-2 bg-gray-100 rounded-lg shadow-lg">
+                <p class="text-lg ">Time Remaining: <span id="countdown" class="text-lg ">{{remaingtime}}</span></p>
+                
+            </div>
+
             <div class="w-96 h-screen bg-white shadow-lg p-4 rounded-r-3xl fixed top-0 h-screen flex flex-col items-center justify-between">
                 <div>
                     <h2 class="text-xl font-bold mb-4">Form Sections</h2>
@@ -61,6 +67,7 @@
                     <a href="/" class="px-4 py-2 rounded-full transition duration-300 bg-gray-800 text-gray-200">Home</a>
                     <a href="/add-user" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition duration-300 hover:bg-gray-800 hover:text-gray-200">Users</a>
                     <a href="/form-editor" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition duration-300 hover:bg-gray-800 hover:text-gray-200">Form Creator</a>
+                    <a href="/dashboard" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition duration-300 hover:bg-gray-800 hover:text-gray-200">Dashboard</a>
                 </header>
                 {% endif %}
                 <div class="max-w-4xl mx-auto p-8 ">
@@ -81,12 +88,38 @@
                                         <h3 class="block text-gray-700 font-semibold text-lg">{{criterion.criterionId}}.{{subcriterion.SubCriterionId}} {{subcriterion.name}}</h3>
                                         {% for metric in subcriterion.metricList %}
                                         <div class="mb-2">
-                                            <label class="block text-gray-700 mb-2 font-semibold">{{criterion.criterionId}}.{{subcriterion.SubCriterionId}}.{{metric.metricId}} {{metric.question}}</label>
+                                            <div class="flex justify-between items-start w-full">
+                                                <div class="flex items-start gap-2 mb-2">
+                                                    <label class="block text-gray-700 font-semibold">{{criterion.criterionId}}.{{subcriterion.SubCriterionId}}.{{metric.metricId}} {{metric.question}}</label> 
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    {%if metric.dataTemplate != None and metric.dataTemplate != '' %} <a href="/media/{{metric.dataTemplate}}" class="text-blue-500 hover:text-blue-700 whitespace-nowrap" target="_blank">Download Data Template</a> {%endif%}
+                                                    {%if metric.hint != '' and metric.hint is not None%}
+                                                    <div class="relative group mt-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                                            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                                        </svg>
+                                                        
+                                                        <div class="absolute bottom-full right-0 mb-2 bg-gray-800 text-gray-200 p-2 rounded-lg shadow-lg w-fit min-w-[400px] max-w-[500px] scale-0 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100 origin-bottom-right">
+                                                            <p>{{metric.hint}}</p>
+                                                        </div>
+                                                    </div>
+                                                    {%endif%}
+                                                </div>
+                                            </div>
                                             {% if metric.answer == "" %}
                                             {% if role == "admin" or role == "editor" %}
                                             <textarea type="text" maxlength="{{metric.max_length}}" id="metric_{{metric.id}}" name="metric_{{metric.id}}" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"></textarea>
+                                            <div id="template_list_{{metric.id}}" class="mt-2"></div>
                                             <div id="file_list_{{metric.id}}" class="mt-2"></div>
+                                            {% if metric.dataTemplate != Null %}
                                             <div class="relative">
+                                                <label class="block text-gray-700 mb-2 absolute bg-white -top-1 left-3">Add Data Template</label>
+                                                <input type="file" id="dataTemplate_metric_{{metric.id}}" accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" name="dataTemplate_metric_{{metric.id}}" class="w-full p-2 pt-4 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" onchange="handleTemplateFileChange(event, '{{metric.id}}')">
+                                            </div>
+                                            {% endif%}
+                                            <div class="relative mt-1">
                                                 <label class="block text-gray-700 mb-2 absolute bg-white -top-1 left-3">Add supporting documents</label>
                                                 <input type="file" id="file_metric_{{metric.id}}" accept=".png,.jpg,.jpeg,.pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple="true" name="file_metric_{{metric.id}}" class="w-full p-2 pt-4 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" onchange="handleFileChange(event, '{{metric.id}}')">
                                             </div>
@@ -127,14 +160,29 @@
 
                 for (let i = 0; i < fileList.length; i++) {
                     const fileItem = document.createElement('div');
-                    fileItem.className = 'flex items-center justify-between p-2 bg-gray-100 rounded-lg shadow-sm mb-2';
+                    fileItem.className = 'flex items-center justify-between p-2 bg-gray-100 border border-dashed border-gray-700 rounded-lg shadow-sm mb-2';
                     fileItem.innerHTML = `
                         <span class="text-gray-700">${fileList[i].name}</span>
                         <button type="button" class="text-red-500 hover:text-red-700" onclick="removeFile(${metricId}, ${i})">Remove</button>
                     `;
                     fileListContainer.appendChild(fileItem);
                 }
+            }
 
+            function handleTemplateFileChange(event, metricId) {
+                const fileList = event.target.files;
+                const fileListContainer = document.getElementById(`template_list_${metricId}`);
+                fileListContainer.innerHTML = '';
+
+                for (let i = 0; i < fileList.length; i++) {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'flex items-center justify-between p-2 bg-blue-100 border border-dashed border-blue-700 rounded-lg shadow-sm mb-2';
+                    fileItem.innerHTML = `
+                        <span class="text-blue-700">${fileList[i].name}</span>
+                        <button type="button" class="text-red-500 hover:text-red-700" onclick="removeTemplate(${metricId}, ${i})">Remove</button>
+                    `;
+                    fileListContainer.appendChild(fileItem);
+                }
             }
 
             function removeFile(metricId, index) {
@@ -150,6 +198,21 @@
 
                 fileInput.files = dataTransfer.files;
                 handleFileChange({ target: fileInput }, metricId);
+            }
+
+            function removeTemplate(metricId,index){
+                const fileInput = document.getElementById(`dataTemplate_metric_${metricId}`);
+                const fileListContainer = document.getElementById(`template_list_${metricId}`);
+                const dataTransfer = new DataTransfer();
+
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    if (i !== index) {
+                        dataTransfer.items.add(fileInput.files[i]);
+                    }
+                }
+
+                fileInput.files = dataTransfer.files;
+                handleTemplateFileChange({ target: fileInput }, metricId);
             }
         </script>
     </body>

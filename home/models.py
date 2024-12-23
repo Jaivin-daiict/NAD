@@ -28,11 +28,15 @@ class Metrics(models.Model):
     question = models.TextField()
     answer = models.TextField(blank=True, null=True)
     max_length = models.IntegerField(default=50000)
+    hint = models.TextField(blank=True, null=True)
     answered_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answered_by', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     answered_at = models.DateTimeField(blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_by')
     sub_criterion = models.ForeignKey(SubCriterion, on_delete=models.CASCADE)
+    dataTemplate = models.FileField(upload_to='templates/', blank=True, null=True)
+    dataTemplateUploaded = models.FileField(upload_to='templates/', blank=True, null=True)
+
 
     def __str__(self):
         return str(self.metricId) + " - " + self.question

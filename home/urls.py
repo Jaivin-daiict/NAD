@@ -14,4 +14,5 @@ urlpatterns = [
     path("manage-metrics/", views.metricManager, name="metricManager"),
     path('send-email/', views.sendEmail, name='sendEmail'),
     path('dashboard/', views.Dashboard, name='Dashboard'),
+    path('DataTemplateNone/', views.DataTemplateNone, name='DataTemplateNone'),
 ]

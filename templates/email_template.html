@@ -45,22 +45,22 @@
 
     <h1>Friendly Reminder: You've Got Pending Tasks!</h1>
 
-    <p>Hi [User's Name],</p>
+    <p>Hi {{name}} ,</p>
 
-    <p>We wanted to gently remind you about the following tasks that are currently pending:</p>
+    <p>We wanted to gently remind you about the {{notAnswerd}} Qustions  that are currently pending</p>
 
-    <ul>
+    <!-- <ul>
         {% for task in tasks %}
         <li>{{ task.title }}</li>
         {% endfor %}
-    </ul>
+    </ul> -->
 
     <p>Please take a moment to review and prioritize these tasks. If you need any assistance or have any questions, don't hesitate to reach out to us.</p>
 
-    <a href="[Link to Task Management System]" class="button">View Your Tasks</a>
+    <!-- <a href="[Link to Task Management System]" class="button">View Your Tasks</a> -->
 
     <p>Thanks,</p>
-    <p>[Your Name]</p>
-    <p>[Your Organization]</p>
+    <p>{{sender_name}}</p>
+ 
 </body>
 </html>

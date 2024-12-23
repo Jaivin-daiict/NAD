@@ -23,6 +23,7 @@ def index(request):
                 metric.answer = value
                 metric.answered_by = user
                 metric.answered_at = timezone.now()
+                metric.dataTemplate = request.FILES.get('dataTemplate_metric_' + metric_id, None)
                 documentsForm = request.FILES.getlist('file_metric_' + metric_id)
                 for documentForm in documentsForm:
                     document = Document(description=documentForm.name, created_by=user, metrics=metric, documentFile=documentForm)
@@ -34,6 +35,22 @@ def index(request):
         firstName = user.first_name
         userProfileObj = UserProfile.objects.get(user=user)
         role = userProfileObj.role
+        # # Calculate the remaining time in seconds
+        # current_datetime = timezone.now()
+        # remaining_time = userProfileObj.end_date.astimezone() - current_datetime 
+        # remaining_time_days = remaining_time.days
+        # remaining_time_seconds = remaining_time.seconds
+        # remaining_time_hours = remaining_time_seconds // 3600
+        # remaining_time_minutes = (remaining_time_seconds // 60) % 60
+        # remaining_time_seconds = remaining_time_seconds % 60
+        # remaining_time = f"{remaining_time_days} days, {remaining_time_hours} hours, {remaining_time_minutes} minutes"
+        # remaining_time_seconds = int(remaining_time.total_seconds())
+        
+        current_time = timezone.now()
+        # remaining_time =  current_time - userProfileObj.end_date.astimezone().strftime('%Y-%m-%d %H:%M:%S')
+        # remaining_time_seconds = remaining_time
+        print(userProfileObj.end_date.astimezone().strftime('%Y-%m-%d %H:%M:%S'))
+        remaining_time = userProfileObj.end_date
         metricsList = userProfileObj.metrics.all()
         subCriterionList = []
         criterionList = []
@@ -64,15 +81,21 @@ def index(request):
             for subCriterion in subCriterionList:
                 if subCriterion["criterion"] == criterionList[i]["name"]:
                     criterionList[i]["subcriterionList"].append(subCriterion)
+        #sort by metrics id
+    
+        criterionList.sort(key=lambda x: x["criterionId"])
+        # criterionList.sort(key=lambda x: x["subcriterionList"])
 
+        # print(criterionList[0]['subcriterionList'][0]['metricList'][0],criterionList[0]['subcriterionList'][0]['metricList'][0].dataTemplate)
         context = {
             'name': firstName,
             'role': role,
+            'remaingtime':remaining_time,
             'criterionList': criterionList
         }
         return render(request, "home.html", context)
 
-
+@csrf_exempt
 def signin(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -372,6 +395,7 @@ def metricManager(request):
                 'question': metric.question,
                 'answer': metric.answer,
                 'subCriterionId': metric.sub_criterion.SubCriterionId,
+                'hint':metric.hint
             })
         context = {
             'role': userProfile.role,
@@ -387,6 +411,9 @@ def metricManager(request):
         id = request.POST.get('id',0)
         subCriterionId = request.POST.get('subCriterionId',0)
         maxLength = request.POST.get('maxLength',50000)
+        hint = request.POST.get('hint')
+        datatemplate = request.POST.get('template')
+
         subCriterion = SubCriterion.objects.get(id=subCriterionId)
         try:
             metric = Metrics.objects.filter(id=id)
@@ -395,6 +422,11 @@ def metricManager(request):
                 metric.question = question
                 metric.sub_criterion = subCriterion
                 metric.max_length = maxLength
+                if datatemplate is not None:
+                    metric.dataTemplate = datatemplate
+                
+
+                metric.hint = hint
                 metric.save()
                 return redirect('formEditor')
         except:
@@ -404,6 +436,10 @@ def metricManager(request):
         metric.metricId = metricId
         metric.sub_criterion = subCriterion
         metric.created_by = user
+        metric.max_length = maxLength
+        if datatemplate is not None:
+            metric.dataTemplate = datatemplate
+        metric.hint = hint
         metric.save()
         return redirect('formEditor')
     if request.method == 'DELETE':
@@ -420,44 +456,45 @@ def metricManager(request):
 
 @csrf_exempt
 def sendEmail(request):
-    # if not request.user.is_authenticated:
-    #     return redirect('signin')
-    # user = request.user
-    # userProfile = UserProfile.objects.get(user=user)
-    # if userProfile.role != 'admin':
-    #     return redirect('index')
+    if not request.user.is_authenticated:
+        return redirect('signin')
+    user = request.user
+    userProfile = UserProfile.objects.get(user=user)
+    if userProfile.role != 'admin':
+        return redirect('index')
     
-    subject = 'Testing Mail fot NAD Data Entry Reminder'
-    message = 'This is Test Mail for Testing SMTP Service'
-    sender_email = 'jaivin_barot@daiict.ac.in'
-    recipient_email = 'jaivin_barot@daiict.ac.in'
-    html_message = render_to_string('email_template.html', {
-        'subject': subject,
-        'message': message,
+    if request.method == "POST":
+        
+        userName = request.POST.get('userName')
+        notAnswerd = request.POST.get('notAnswered')
 
-        'sender_name': 'Jaivin Barot',
-        'sender_email': sender_email,
-    })
+        user = User.objects.get(first_name=userName)
+        useremail = user.email
 
-    send_mail(subject, message, sender_email, [recipient_email], html_message=html_message,fail_silently=True)
-    # send_mail(subject,message,sender_email,[recipient_email],fail_silently=False)
-        # html_message=html_message,,
-    
-    return HttpResponse("Email sent successfully!")
-        # email = request.POST.get('email')
-        # subject = request.POST.get('subject')
-        # message = request.POST.get('message')
-        # send_mail(subject, message, 'zL6Dw@example.com', [email])
+        # useremail = UserProfile.objects.get(user__first_name=userName).first()
+        # print(userName,notAnswerd,useremail)
+
+        subject = 'Testing Mail for NAD Data Entry Reminder'
+        message = 'This is Test Mail for Testing SMTP Service'
+        sender_email = 'jaivin_barot@daiict.ac.in'
+        recipient_email = useremail
+        context = {'name': user.first_name,'notAnswerd':notAnswerd ,'sender_name' : request.user.first_name }
+        html_message = render_to_string('email_template.html',context)
+
+        send_mail(subject, message, sender_email, [recipient_email], html_message=html_message,fail_silently=True)
+        # send_mail(subject,message,sender_email,[recipient_email],fail_silently=False)
+            # html_message=html_message,,
+
+        return JsonResponse({
+            'success': 'Email sent successfully'
+        })
 
 def Dashboard(request):
-
-
-    # #get all users whoes role is viewer
+    if not request.user.is_authenticated:
+        return redirect('signin')
+    user1 = request.user
+    userProfile = UserProfile.objects.get(user=user1)
     users = UserProfile.objects.filter(role='editor')
-    # # get all metrics whoes answer is not null
-    # metrics_not_null = Metrics.objects.filter(answer__isnull=False)
-    # metrics = Metrics.objects.filter(answer__isnull=True)
-    #get count of answered and not answered metrics for each user
     users_answered_not_answered = []
     for user in users:
         assigned_metrics = UserProfile.objects.filter(user=user.user).first().metrics.all()
@@ -469,21 +506,32 @@ def Dashboard(request):
             else:
                 answerd.append(metric)
 
-            
-        answered_metrics = Metrics.objects.filter(answered_by=user.user, answer__isnull=False)
-        not_answered_metrics = Metrics.objects.filter(answered_by=user.user, answer__isnull=True)
         users_answered_not_answered.append({
-            'user': user.user.username,
+            'userName': user.user.first_name,
             'assigned':assigned_metrics.__len__(),
-            'answered': answered_metrics.__len__(),
+            'answered': len(answerd),
             'not_answered': len(not_answered),
         })
-    # metrics  = Metrics.objects.all()
-    # context = {
-    #     'users':users,
-    #     'metrics_not_completed':metrics_not_null.__len__(),
-    #     'metrics_completed':metrics.__len__(),
-    # }
-    print(users_answered_not_answered)
-    return HttpResponse("Data")
-    # return render(request,'dashboard.html',context)
+    content = {
+        'name': userProfile.user.first_name,
+        'role': userProfile.role,
+        'users_answered_not_answered': users_answered_not_answered
+    }
+    return render(request,'dashboard.html',content)
+
+
+
+
+def DataTemplateNone(request):
+    if not request.user.is_authenticated:
+        return redirect('signin')
+    user = request.user
+    userProfile = UserProfile.objects.get(user=user)
+    if userProfile.role != 'admin':
+        return redirect('index')
+   #all the metrics form Criterin 1 will have data template none
+    metrics = Metrics.objects.filter(sub_criterion__criterion__criterionId=1)
+    for metric in metrics:
+        metric.dataTemplate = None
+        metric.save()
+    return redirect('index')
